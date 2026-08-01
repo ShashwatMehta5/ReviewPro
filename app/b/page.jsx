@@ -1,166 +1,248 @@
 'use client'
 import { useState } from 'react'
+import { chipSets } from '@/lib/chipSets'
 
-const QUESTIONS = [
-  "What did you enjoy most — food, service, or ambience?",
-  "Was there any dish or moment that stood out?",
-  "Would you come back or bring a friend?"
-]
+export default function ReviewPage() {
+  const business = {
+    name: "Spice Garden",
+    category: "restaurant",
+    emoji: "🍽️",
+    location: "Ahmedabad",
+    googleUrl: "https://maps.google.com"
+  }
 
-const MOCK_REVIEWS = [
-  "Amazing experience at Spice Garden! The food was absolutely delicious and the service was super friendly. Will definitely be coming back with friends!",
-  "Loved every bit of my visit to Spice Garden. The ambience was great and the dishes were outstanding. Highly recommend to everyone!",
-  "Spice Garden never disappoints! Great food, warm staff, and a lovely atmosphere. One of the best restaurants in Ahmedabad.",
-  "Had a wonderful time at Spice Garden. The flavours were incredible and the service was prompt. A must-visit!",
-  "Excellent experience from start to finish. The food was fresh, staff was attentive, and the overall vibe was fantastic!"
-]
-
-export default function BusinessPage() {
-  const [rating, setRating] = useState(0)
-  const [hover, setHover] = useState(0)
   const [step, setStep] = useState('rating')
-  const [answers, setAnswers] = useState(['', '', ''])
-  const [currentQ, setCurrentQ] = useState(0)
+  const [starRating, setStarRating] = useState(0)
+  const [chipsQ1, setChipsQ1] = useState([])
+  const [chipsQ2, setChipsQ2] = useState([])
   const [review, setReview] = useState('')
-  const [reviewIndex, setReviewIndex] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [consent, setConsent] = useState(false)
+  const [message, setMessage] = useState('')
 
-  const handleRating = (val) => {
-    setRating(val)
-    if (val <= 2) {
-      setStep('complaint')
+  const chips = chipSets[business.category]
+
+  const handleStar = (star) => {
+    setStarRating(star)
+    if (star <= 3) {
+      setStep('dual')
     } else {
-      setStep('questions')
+      setStep('chips')
     }
   }
 
-  const handleAnswer = (val) => {
-    const updated = [...answers]
-    updated[currentQ] = val
-    setAnswers(updated)
-  }
-
-  const handleNext = () => {
-    if (currentQ < QUESTIONS.length - 1) {
-      setCurrentQ(currentQ + 1)
+  const toggleChip = (chip, setter, selected) => {
+    if (selected.includes(chip)) {
+      setter(selected.filter(c => c !== chip))
     } else {
-      generateReview()
+      setter([...selected, chip])
     }
   }
 
-  const generateReview = () => {
-    setLoading(true)
-    setStep('loading')
-    setTimeout(() => {
-      setReview(MOCK_REVIEWS[0])
-      setReviewIndex(0)
-      setStep('review')
-      setLoading(false)
-    }, 2000)
+  const handleGenerate = () => {
+    const mockReviews = [
+      `Really enjoyed my visit to ${business.name}! The ${chipsQ1[0] || 'food'} was excellent and the ${chipsQ2[0] || 'service'} made it a great experience. Will definitely be coming back soon!`,
+      `Great experience at ${business.name}. Loved the ${chipsQ1[0] || 'ambiance'} and the ${chipsQ2[0] || 'value for money'} was spot on. Highly recommend to anyone in the area!`,
+      `${business.name} never disappoints! The ${chipsQ1[0] || 'quality'} is always top notch and the ${chipsQ2[0] || 'atmosphere'} is perfect. One of my favourite spots in ${business.location}.`
+    ]
+    setReview(mockReviews[Math.floor(Math.random() * mockReviews.length)])
+    setStep('draft')
   }
 
-  const shuffleReview = () => {
-    const next = (reviewIndex + 1) % MOCK_REVIEWS.length
-    setReviewIndex(next)
-    setReview(MOCK_REVIEWS[next])
+  const handlePost = () => {
+    if (!consent) return
+    navigator.clipboard.writeText(review).catch(() => {})
+    window.open(business.googleUrl, '_blank')
+    setStep('done')
+  }
+
+  const handleMessage = () => {
+    if (!message.trim()) return
+    alert('Message sent to owner! They will get back to you shortly.')
+    setStep('done')
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: 'sans-serif' }}>
-      <div style={{ background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '420px', width: '100%', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', textAlign: 'center' }}>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-sm">
 
-        {/* Business Info */}
-        <div style={{ width: '72px', height: '72px', background: '#f3f4f6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '32px' }}>🍽️</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#111', margin: '0 0 4px' }}>Spice Garden</h1>
-        <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 28px' }}>Restaurant · Ahmedabad</p>
-
-        {/* Star Rating */}
+        {/* RATING STEP */}
         {step === 'rating' && (
-          <>
-            <p style={{ fontWeight: '600', fontSize: '16px', color: '#111', marginBottom: '16px' }}>How was your experience?</p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
+          <div className="text-center">
+            <div className="text-6xl mb-4">{business.emoji}</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">{business.name}</h1>
+            <p className="text-gray-500 text-sm mb-8">{business.category} · {business.location}</p>
+            <p className="text-gray-700 font-medium mb-6">How was your experience?</p>
+            <div className="flex justify-center gap-3 mb-4">
               {[1,2,3,4,5].map(star => (
-                <span key={star} onClick={() => handleRating(star)} onMouseEnter={() => setHover(star)} onMouseLeave={() => setHover(0)}
-                  style={{ fontSize: '40px', cursor: 'pointer', transition: 'transform 0.1s', transform: (hover || rating) >= star ? 'scale(1.2)' : 'scale(1)' }}>
-                  {(hover || rating) >= star ? '⭐' : '☆'}
-                </span>
+                <button
+                  key={star}
+                  onClick={() => handleStar(star)}
+                  className="text-5xl transition-transform hover:scale-110"
+                >
+                  <span style={{ color: star <= starRating ? '#F59E0B' : '#D1D5DB' }}>★</span>
+                </button>
               ))}
             </div>
-            <p style={{ color: '#9ca3af', fontSize: '13px' }}>Tap a star to rate</p>
-          </>
+            <p className="text-gray-400 text-sm">Tap a star to rate</p>
+          </div>
         )}
 
-        {/* Questions */}
-        {step === 'questions' && (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '20px' }}>
-              {QUESTIONS.map((_, i) => (
-                <div key={i} style={{ width: '28px', height: '4px', borderRadius: '2px', background: i <= currentQ ? '#111' : '#e5e7eb' }} />
+        {/* DUAL OPTION STEP */}
+        {step === 'dual' && (
+          <div className="text-center">
+            <div className="flex justify-center gap-1 mb-4">
+              {[1,2,3,4,5].map(s => (
+                <span key={s} style={{ color: s <= starRating ? '#F59E0B' : '#D1D5DB', fontSize: '24px' }}>★</span>
               ))}
             </div>
-            <p style={{ fontWeight: '600', fontSize: '16px', color: '#111', marginBottom: '16px' }}>{QUESTIONS[currentQ]}</p>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Tell us more</h2>
+            <p className="text-gray-500 text-sm mb-8">Choose how you'd like to share</p>
+
+            <button
+              onClick={() => setStep('message')}
+              className="w-full border-2 border-gray-200 rounded-xl p-4 mb-4 text-left hover:border-gray-400 transition-colors"
+            >
+              <div className="font-semibold text-gray-900">✉️ Send message to owner</div>
+              <div className="text-gray-500 text-sm mt-1">Private — not posted publicly</div>
+            </button>
+
+            <button
+              onClick={() => setStep('chips')}
+              className="w-full border-2 border-gray-200 rounded-xl p-4 text-left hover:border-gray-400 transition-colors"
+            >
+              <div className="font-semibold text-gray-900">⭐ Share on Google</div>
+              <div className="text-gray-500 text-sm mt-1">Post your honest experience</div>
+            </button>
+
+            <p className="text-gray-400 text-xs mt-6">Both options are equally available</p>
+          </div>
+        )}
+
+        {/* MESSAGE OWNER STEP */}
+        {step === 'message' && (
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Message the owner</h2>
+            <p className="text-gray-500 text-sm mb-6">Tell them what went wrong — they'll make it right.</p>
             <textarea
-              value={answers[currentQ]}
-              onChange={(e) => handleAnswer(e.target.value)}
-              placeholder="Type your answer here..."
-              style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '14px', minHeight: '90px', resize: 'none', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }}
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              placeholder="What could we have done better?"
+              className="w-full border border-gray-200 rounded-xl p-4 h-32 text-gray-900 text-sm resize-none focus:outline-none focus:border-gray-400"
             />
             <button
-              onClick={handleNext}
-              disabled={!answers[currentQ]}
-              style={{ width: '100%', padding: '14px', background: answers[currentQ] ? '#111' : '#e5e7eb', color: answers[currentQ] ? 'white' : '#9ca3af', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '600', cursor: answers[currentQ] ? 'pointer' : 'not-allowed' }}>
-              {currentQ < QUESTIONS.length - 1 ? 'Next →' : 'Generate My Review ✨'}
+              onClick={handleMessage}
+              className="w-full bg-gray-900 text-white rounded-xl py-4 mt-4 font-semibold"
+            >
+              Send Message
             </button>
-            <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '10px' }}>Question {currentQ + 1} of {QUESTIONS.length}</p>
-          </>
+          </div>
         )}
 
-        {/* Loading */}
-        {step === 'loading' && (
-          <>
-            <div style={{ fontSize: '40px', marginBottom: '16px' }}>✨</div>
-            <p style={{ fontWeight: '600', fontSize: '16px', color: '#111', marginBottom: '8px' }}>Writing your review...</p>
-            <p style={{ color: '#6b7280', fontSize: '14px' }}>Just a moment</p>
-          </>
+        {/* CHIPS STEP */}
+        {step === 'chips' && (
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">{chips.q1.question}</h2>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {chips.q1.chips.map(chip => (
+                <button
+                  key={chip}
+                  onClick={() => toggleChip(chip, setChipsQ1, chipsQ1)}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium border-2 transition-all ${
+                    chipsQ1.includes(chip)
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-700 border-gray-200'
+                  }`}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+
+            <h2 className="text-lg font-bold text-gray-900 mb-4">{chips.q2.question}</h2>
+            <div className="grid grid-cols-2 gap-3 mb-8">
+              {chips.q2.chips.map(chip => (
+                <button
+                  key={chip}
+                  onClick={() => toggleChip(chip, setChipsQ2, chipsQ2)}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium border-2 transition-all ${
+                    chipsQ2.includes(chip)
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-700 border-gray-200'
+                  }`}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleGenerate}
+              disabled={chipsQ1.length === 0 || chipsQ2.length === 0}
+              className={`w-full rounded-xl py-4 font-semibold text-white transition-all ${
+                chipsQ1.length > 0 && chipsQ2.length > 0
+                  ? 'bg-gray-900'
+                  : 'bg-gray-300 cursor-not-allowed'
+              }`}
+            >
+              ✨ Generate My Review
+            </button>
+            <p className="text-gray-400 text-xs text-center mt-3">Select at least one from each section</p>
+          </div>
         )}
 
-        {/* Generated Review */}
-        {step === 'review' && (
-          <>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>🎉</div>
-            <p style={{ fontWeight: '600', fontSize: '16px', color: '#111', marginBottom: '16px' }}>Here's your review!</p>
+        {/* DRAFT STEP */}
+        {step === 'draft' && (
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Your Review Draft</h2>
             <textarea
               value={review}
-              onChange={(e) => setReview(e.target.value)}
-              style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '14px', minHeight: '120px', resize: 'none', outline: 'none', boxSizing: 'border-box', marginBottom: '12px', lineHeight: '1.6' }}
+              onChange={e => setReview(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl p-4 h-40 text-gray-900 text-sm resize-none focus:outline-none focus:border-gray-400"
             />
-            <button onClick={shuffleReview}
-              style={{ width: '100%', padding: '12px', background: 'transparent', color: '#111', border: '1px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', cursor: 'pointer', marginBottom: '8px' }}>
-              🔀 Shuffle Review
-            </button>
             <button
-              style={{ width: '100%', padding: '14px', background: '#4285F4', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '600', cursor: 'pointer' }}>
-              ⭐ Post to Google
+              onClick={handleGenerate}
+              className="w-full border border-gray-200 rounded-xl py-3 mt-3 text-gray-600 text-sm font-medium"
+            >
+              ↻ Try a different version
             </button>
-          </>
+
+            <div className="flex items-start gap-3 mt-6 mb-4">
+              <input
+                type="checkbox"
+                id="consent"
+                checked={consent}
+                onChange={e => setConsent(e.target.checked)}
+                className="mt-1"
+              />
+              <label htmlFor="consent" className="text-gray-500 text-xs">
+                I confirm this is my own genuine experience and I consent to ReviewPro recording that a review was submitted.
+              </label>
+            </div>
+
+            <button
+              onClick={handlePost}
+              disabled={!consent}
+              className={`w-full rounded-xl py-4 font-semibold text-white transition-all ${
+                consent ? 'bg-blue-600' : 'bg-gray-300 cursor-not-allowed'
+              }`}
+            >
+              G  Post to Google
+            </button>
+          </div>
         )}
 
-        {/* Complaint */}
-        {step === 'complaint' && (
-          <>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>😔</div>
-            <p style={{ fontWeight: '600', fontSize: '16px', color: '#111', marginBottom: '8px' }}>We're sorry to hear that</p>
-            <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '20px' }}>Tell us what went wrong — the owner will personally look into it</p>
-            <textarea placeholder="What could we have done better?"
-              style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '14px', minHeight: '100px', resize: 'none', outline: 'none', boxSizing: 'border-box' }} />
-            <button style={{ marginTop: '16px', width: '100%', padding: '14px', background: '#111', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '600', cursor: 'pointer' }}>
-              Send Feedback
-            </button>
-            <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '12px' }}>This feedback goes directly to the owner — not public</p>
-          </>
+        {/* DONE STEP */}
+        {step === 'done' && (
+          <div className="text-center">
+            <div className="text-6xl mb-4">🎉</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Thank you!</h2>
+            <p className="text-gray-500">Your review has been copied. Paste it on the Google page that just opened.</p>
+          </div>
         )}
 
+        {/* Footer */}
+        <p className="text-center text-gray-300 text-xs mt-8">Powered by ReviewPro</p>
       </div>
-    </main>
+    </div>
   )
 }
