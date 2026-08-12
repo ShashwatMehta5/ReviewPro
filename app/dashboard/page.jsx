@@ -1,7 +1,7 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import QRCode from 'qrcode.react'
+import { QRCodeCanvas } from 'qrcode.react'
 
 export default function Dashboard() {
   const [business, setBusiness] = useState(null)
@@ -10,7 +10,6 @@ export default function Dashboard() {
   const [complaints, setComplaints] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
-  const qrRef = useRef(null)
 
   useEffect(() => {
     async function loadDashboard() {
@@ -35,12 +34,8 @@ export default function Dashboard() {
       if (reviewData) {
         setSessions(reviewData)
         const total = reviewData.length
-        const avg = total > 0
-          ? (reviewData.reduce((sum, r) => sum + r.star_rating, 0) / total).toFixed(1)
-          : 0
-        const today = reviewData.filter(r =>
-          new Date(r.created_at).toDateString() === new Date().toDateString()
-        ).length
+        const avg = total > 0 ? (reviewData.reduce((sum, r) => sum + r.star_rating, 0) / total).toFixed(1) : 0
+        const today = reviewData.filter(r => new Date(r.created_at).toDateString() === new Date().toDateString()).length
         setStats(prev => ({ ...prev, total, avg, today }))
       }
 
@@ -52,10 +47,7 @@ export default function Dashboard() {
 
       if (complaintData) {
         setComplaints(complaintData)
-        setStats(prev => ({
-          ...prev,
-          complaints: complaintData.filter(c => c.status === 'new').length
-        }))
+        setStats(prev => ({ ...prev, complaints: complaintData.filter(c => c.status === 'new').length }))
       }
 
       setLoading(false)
@@ -76,21 +68,13 @@ export default function Dashboard() {
   const downloadQR = (size, label) => {
     const canvas = document.getElementById('qr-canvas')
     if (!canvas) return
-
-    // Create a high-res version
     const offscreen = document.createElement('canvas')
     offscreen.width = size
     offscreen.height = size
     const ctx = offscreen.getContext('2d')
-
-    // White background
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, size, size)
-
-    // Draw QR scaled up
     ctx.drawImage(canvas, 0, 0, size, size)
-
-    // Download
     const link = document.createElement('a')
     link.download = `reviewpro-qr-${business?.slug}-${label}.png`
     link.href = offscreen.toDataURL('image/png', 1.0)
@@ -117,9 +101,7 @@ export default function Dashboard() {
             <p className="text-gray-500 text-xs">{business?.category} · {business?.location}</p>
           </div>
         </div>
-        <button onClick={handleLogout} className="text-gray-400 text-sm hover:text-gray-600">
-          Logout
-        </button>
+        <button onClick={handleLogout} className="text-gray-400 text-sm hover:text-gray-600">Logout</button>
       </div>
 
       {/* Tabs */}
@@ -129,11 +111,7 @@ export default function Dashboard() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-400'
-              }`}
+              className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400'}`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
@@ -166,33 +144,20 @@ export default function Dashboard() {
               {sessions.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-4xl mb-3">📋</div>
-                  <p className="text-gray-500 text-sm">
-                    No reviews yet. Place your QR code and wait for the first scan!
-                  </p>
+                  <p className="text-gray-500 text-sm">No reviews yet. Place your QR code and wait for the first scan!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {sessions.slice(0, 10).map(session => (
-                    <div
-                      key={session.id}
-                      className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
-                    >
+                    <div key={session.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
                       <div className="flex items-center gap-3">
                         <div className="flex">
                           {[1,2,3,4,5].map(s => (
-                            <span
-                              key={s}
-                              style={{
-                                color: s <= session.star_rating ? '#F59E0B' : '#D1D5DB',
-                                fontSize: '14px'
-                              }}
-                            >★</span>
+                            <span key={s} style={{ color: s <= session.star_rating ? '#F59E0B' : '#D1D5DB', fontSize: '14px' }}>★</span>
                           ))}
                         </div>
                         <span className="text-gray-500 text-xs">
-                          {session.review_path === 'google'
-                            ? '🌐 Posted to Google'
-                            : '✉️ Sent to owner'}
+                          {session.review_path === 'google' ? '🌐 Posted to Google' : '✉️ Sent to owner'}
                         </span>
                       </div>
                       <span className="text-gray-400 text-xs">
@@ -213,9 +178,7 @@ export default function Dashboard() {
             {complaints.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-4xl mb-3">✉️</div>
-                <p className="text-gray-500 text-sm">
-                  No messages yet. Unhappy customers will reach out here instead of going public on Google.
-                </p>
+                <p className="text-gray-500 text-sm">No messages yet. Unhappy customers will reach out here instead of going public on Google.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -224,13 +187,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex">
                         {[1,2,3,4,5].map(s => (
-                          <span
-                            key={s}
-                            style={{
-                              color: s <= c.star_rating ? '#F59E0B' : '#D1D5DB',
-                              fontSize: '14px'
-                            }}
-                          >★</span>
+                          <span key={s} style={{ color: s <= c.star_rating ? '#F59E0B' : '#D1D5DB', fontSize: '14px' }}>★</span>
                         ))}
                       </div>
                       <select
@@ -244,9 +201,7 @@ export default function Dashboard() {
                       </select>
                     </div>
                     <p className="text-gray-700 text-sm">{c.message}</p>
-                    <p className="text-gray-400 text-xs mt-2">
-                      {new Date(c.created_at).toLocaleDateString()}
-                    </p>
+                    <p className="text-gray-400 text-xs mt-2">{new Date(c.created_at).toLocaleDateString()}</p>
                   </div>
                 ))}
               </div>
@@ -258,33 +213,24 @@ export default function Dashboard() {
         {activeTab === 'qr' && (
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <h2 className="font-bold text-gray-900 mb-1">Your QR Code</h2>
-            <p className="text-gray-500 text-sm mb-6">
-              Download and print — place on counter, tables, or bill folders.
-            </p>
+            <p className="text-gray-500 text-sm mb-6">Download and print — place on counter, tables, or bill folders.</p>
 
-            {/* QR Code display */}
             <div className="bg-gray-50 rounded-2xl p-8 flex flex-col items-center mb-6">
               <div className="bg-white p-4 rounded-2xl shadow-sm mb-4">
-                <QRCode
+                <QRCodeCanvas
                   id="qr-canvas"
                   value={qrUrl}
                   size={200}
                   level="H"
-                  renderAs="canvas"
                   includeMargin={true}
                   bgColor="#ffffff"
                   fgColor="#0a0a0a"
                 />
               </div>
-              <p className="text-gray-800 font-medium text-sm text-center mb-1">
-                {business?.name}
-              </p>
-              <p className="text-gray-400 text-xs text-center break-all max-w-xs">
-                {qrUrl}
-              </p>
+              <p className="text-gray-800 font-medium text-sm text-center mb-1">{business?.name}</p>
+              <p className="text-gray-400 text-xs text-center break-all max-w-xs">{qrUrl}</p>
             </div>
 
-            {/* Download buttons */}
             <div className="grid grid-cols-3 gap-3 mb-6">
               <button
                 onClick={() => downloadQR(400, 'standard')}
@@ -309,7 +255,6 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* URL copy section */}
             <div className="bg-blue-50 rounded-xl p-4 mb-4">
               <p className="text-blue-700 text-xs font-medium mb-2">Your review page URL</p>
               <div className="flex items-center gap-2">
@@ -326,7 +271,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Placement tips */}
             <div className="bg-green-50 rounded-xl p-4">
               <p className="text-green-700 text-sm font-medium mb-2">💡 Best placement spots</p>
               <ul className="space-y-1">
