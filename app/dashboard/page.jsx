@@ -70,8 +70,14 @@ export default function Dashboard() {
     </div>
   )
 
+  const qrUrl = `https://review-pro-npc3.vercel.app/b/${business?.slug}`
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`
+  const qrDownloadUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrUrl)}&download=1`
+  const qrPrintUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(qrUrl)}`
+
   return (
     <div className="min-h-screen bg-gray-50">
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -104,7 +110,6 @@ export default function Dashboard() {
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div>
-            {/* Stats cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
                 { label: 'Total Reviews', value: stats.total, icon: '⭐' },
@@ -120,7 +125,6 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* Recent reviews */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h2 className="font-bold text-gray-900 mb-4">Recent Review Sessions</h2>
               {sessions.length === 0 ? (
@@ -195,19 +199,44 @@ export default function Dashboard() {
         {activeTab === 'qr' && (
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <h2 className="font-bold text-gray-900 mb-2">Your QR Code</h2>
-            <p className="text-gray-500 text-sm mb-6">Share this link or print the QR code for your business.</p>
+            <p className="text-gray-500 text-sm mb-6">Download and print this QR code — place it on your counter, table, or bill folder.</p>
+
             <div className="bg-gray-50 rounded-xl p-6 text-center mb-4">
-              <p className="text-blue-600 font-medium text-lg mb-2">
-                reviewpro.in/b/{business?.slug}
-              </p>
-              <p className="text-gray-400 text-xs">Place this URL on a QR code at your counter</p>
+              <img
+                src={qrImageUrl}
+                alt="QR Code"
+                className="mx-auto mb-4 rounded-xl"
+                width={200}
+                height={200}
+              />
+              <p className="text-gray-600 text-sm font-medium mb-1">{qrUrl}</p>
+              <p className="text-gray-400 text-xs">Scan to test your review page</p>
             </div>
-            <div className="bg-blue-50 rounded-xl p-4">
-              <p className="text-blue-700 text-sm font-medium mb-1">How to generate your QR code:</p>
-              <p className="text-blue-600 text-xs">Go to qr-code-generator.com → paste your URL → download PNG → print at A5 size</p>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              
+                href={qrDownloadUrl}
+                download="reviewpro-qr.png"
+                className="bg-gray-900 text-white text-center py-3 rounded-xl text-sm font-semibold hover:bg-gray-700 transition-colors"
+              >
+                ⬇ Download PNG
+              </a>
+              
+                href={qrPrintUrl}
+                target="_blank"
+                className="border border-gray-200 text-gray-700 text-center py-3 rounded-xl text-sm font-semibold hover:border-gray-400 transition-colors"
+              >
+                🖨 Print Size
+              </a>
+            </div>
+
+            <div className="bg-green-50 rounded-xl p-4">
+              <p className="text-green-700 text-sm font-medium mb-1">💡 Placement tip</p>
+              <p className="text-green-600 text-xs">Place the QR code at eye level near the payment counter or on every table. The more visible it is, the more scans you get.</p>
             </div>
           </div>
         )}
+
       </div>
     </div>
   )

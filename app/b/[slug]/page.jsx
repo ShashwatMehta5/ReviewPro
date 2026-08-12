@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { use } from 'react'
+import BrandAnimation from '@/components/BrandAnimation'
 import { chipSets } from '@/lib/chipSets'
 import { supabase } from '@/lib/supabase'
 
@@ -8,6 +9,7 @@ export default function ReviewPage({ params }) {
   const { slug } = use(params)
   const [business, setBusiness] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showAnim, setShowAnim] = useState(true)
   const [step, setStep] = useState('rating')
   const [starRating, setStarRating] = useState(0)
   const [chipsQ1, setChipsQ1] = useState([])
@@ -34,6 +36,8 @@ export default function ReviewPage({ params }) {
     }
     fetchBusiness()
   }, [slug])
+
+  if (showAnim) return <BrandAnimation onComplete={() => setShowAnim(false)} />
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -174,7 +178,10 @@ export default function ReviewPage({ params }) {
             <button onClick={handleGenerate} className="w-full border border-gray-200 rounded-xl py-3 mt-3 text-gray-600 text-sm font-medium">↻ Try a different version</button>
             <div className="flex items-start gap-3 mt-6 mb-4">
               <input type="checkbox" id="consent" checked={consent} onChange={e => setConsent(e.target.checked)} className="mt-1" />
-              <label htmlFor="consent" className="text-gray-500 text-xs">I confirm this is my own genuine experience and I consent to ReviewPro recording that a review was submitted.</label>
+              <label htmlFor="consent" className="text-gray-500 text-xs">
+                I confirm this is my own genuine experience and I consent to ReviewPro recording that a review was submitted.{' '}
+                <a href="/privacy" className="text-blue-500 underline">Privacy Policy</a>
+              </label>
             </div>
             <button onClick={handlePost} disabled={!consent} className={`w-full rounded-xl py-4 font-semibold text-white transition-all ${consent ? 'bg-blue-600' : 'bg-gray-300 cursor-not-allowed'}`}>G  Post to Google</button>
           </div>
